@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import axios from 'axios';
+import List from './List';
+import NewListForm from './NewListForm';
 
 class ListsContainer extends Component {
   constructor(props) {
@@ -7,6 +9,9 @@ class ListsContainer extends Component {
     this.state = {
       lists: []
     }
+
+    this.addNewList = this.addNewList.bind(this)
+    this.removeList = this.removeList.bind(this)
   }
 
   componentDidMount() {
@@ -20,19 +25,40 @@ class ListsContainer extends Component {
       .catch(error => console.log(error))
   }
 
+  addNewList(title, excerpt) {
+    axios.post('/api/v1/lists', {list: {title, excerpt}})
+      .then(response => {
+        console.log(response)
+        const lists = [...this.state.lists, response.data]
+        this.setState({lists})
+      })
+      .catch(error => {console.log(error)})
+  }
+
+  removeList(id) {
+    axios.delete('/api/v1/lists/' + id)
+      .then(response => {
+        const lists = this.state.lists.filter(
+          list => list.id !== id
+        )
+
+        this.setState({lists})
+      })
+      .catch(error => console.log(error))
+  }
+
   render() {
-    let list = this.state.lists.map((item, index) => {
-      return (
-        <div className="single-list" key={index}>
-          <h4>{item.title}</h4>
-          <p>{item.excerpt}</p>
-        </div>
-      )
+    let lists = this.state.lists.map((list, index) => {
+      return (<List list={list} key={index} onRemoveList={this.removeList} />)
     })
 
     return (
-      <div className="lists-container">
-        {list}
+      <div>
+        <div className="lists-container">
+          {lists}
+        </div>
+
+        <NewListForm onNewList={this.addNewList} />
       </div>
     )
   }
